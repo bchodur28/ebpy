@@ -1,0 +1,48 @@
+# -------------------------------------------------
+# Python artifacts
+# -------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments (if you ever add one)
+.venv/
+venv/
+ENV/
+env/
+
+# -------------------------------------------------
+# Blender / local development
+# -------------------------------------------------
+# Local test scripts (not part of public API)
+tests.py
+test_*.py
+
+# Blender autosave / backup files
+*.blend1
+*.blend2
+*.blend@
+*.blend~
+
+# Blender temp / cache
+*.tmp
+*.log
+
+# -------------------------------------------------
+# OS / editor junk
+# -------------------------------------------------
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/
+
+# PyCharm
+.idea/
+
+# -------------------------------------------------
+# Build / distribution (future-proofing)
+# -------------------------------------------------
+build/
+dist/
+*.egg-info/
