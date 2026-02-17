@@ -6,6 +6,8 @@ import bpy
 import bmesh
 from mathutils import Vector
 
+from ebpy.stopwatch import timer_dec
+
 from ._context import ContextError, edit_mode, object_mode, preserve_selection
 
 VecLike = Iterable[float]
@@ -83,6 +85,7 @@ class MeshSession:
         else:
             return [v.index for v in self._bm.verts]
         
+    @timer_dec
     def move_vertices(self, direction: VecLike, distance: float, *, space: str = "LOCAL", verts: Optional[Iterable[int]] = None):
         """Translate given vertices (indices) by direction * distance."""
         if self._bm is None:
