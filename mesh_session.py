@@ -84,29 +84,40 @@ class MeshSession:
             return [v.index for v in self._bm.verts if v.select]
         else:
             return [v.index for v in self._bm.verts]
-        
-    @timer_dec
+
+    @timer_dec  
     def move_vertices(self, direction: VecLike, distance: float, *, space: str = "LOCAL", verts: Optional[Iterable[int]] = None):
         """Translate given vertices (indices) by direction * distance."""
-        if self._bm is None:
+        bm = self._bm
+        if bm is None:
             raise ContextError("MeshSession is not entered.")
+        
+        dist = float(distance)
+        if dist == 0.0:
+            return
         
         delta = Vector(direction)
         if delta.length == 0:
             return
         
-        delta = delta.normalized() * float(distance)
+        delta = delta.normalized() * distance
 
-        space = space.upper()
-        if space not in ("LOCAL", "WORLD"):
+        sp = space.upper()
+        if sp == "WORLD":
+            delta = self.obj.matrix_world.inverted_safe().to_3x3() @ delta
+        elif sp != "LOCAL":
             raise ContextError("Space must be 'LOCAL' or 'WORLD'.")
         
-        if space == "WORLD":
-            delta = self.obj.matrix_world.inverted_safe().to_3x3() @ delta
+        verts_seq = bm.verts
+        d = delta
 
-        self._bm.verts.ensure_lookup_table()
         if verts is None:
-            bmverts = list(self._bm.verts)
+            for v in bm.verts:
+                v.co += d
+                
         else:
-            bmverts = [self._bm.verts[i] for i in verts]
-        bmesh.ops.translate(self._bm, verts=bmverts, vec=delta)
+            verts_seq.ensure_lookup_table()
+            for i in verts:
+                verts_seq[i].co += d
+
+        
