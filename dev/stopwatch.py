@@ -1,5 +1,4 @@
 import time
-import functools
 
 def timer_dec(base_fn):
     def enhanced_fn(*args, **kwargs):

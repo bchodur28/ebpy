@@ -1,18 +1,17 @@
 from __future__ import annotations
-from contextlib import contextmanager
 from typing import Iterable, List, Optional
+from mathutils import Vector
 
 import bpy
 import bmesh
-from mathutils import Vector
 
-from ebpy.stopwatch import timer_dec
+from ebpy.dev.stopwatch import timer_dec
 
-from ._context import ContextError, edit_mode, object_mode, preserve_selection
+from ebpy._context import ContextError, edit_mode
 
 VecLike = Iterable[float]
 
-class MeshSession:
+class BMeshSession:
     """
     Context maager that opens a BMESH for the given object, 
     yields a session object with convenient methods, and writes back on exit.
@@ -31,7 +30,7 @@ class MeshSession:
         self._in_edit_mode: Optional[bool] = None
         self._is_temp_bm = False
 
-    def __enter__(self) -> "MeshSession":
+    def __enter__(self) -> "BMeshSession":
         if self.switch_to_edit:
             # edit_mode context ensures the active object + mode switching and selection preserved
             self._mode_cm = edit_mode(self.obj)
@@ -85,12 +84,8 @@ class MeshSession:
         else:
             return [v.index for v in self._bm.verts]
 
-    @timer_dec  
     def move_vertices(self, direction: VecLike, distance: float, *, space: str = "LOCAL", verts: Optional[Iterable[int]] = None):
         """Translate given vertices (indices) by direction * distance."""
-        bm = self._bm
-        if bm is None:
-            raise ContextError("MeshSession is not entered.")
         
         dist = float(distance)
         if dist == 0.0:
@@ -108,16 +103,19 @@ class MeshSession:
         elif sp != "LOCAL":
             raise ContextError("Space must be 'LOCAL' or 'WORLD'.")
         
+        bm = self._bm
         verts_seq = bm.verts
         d = delta
 
         if verts is None:
-            for v in bm.verts:
-                v.co += d
-                
+            for v in verts_seq:
+                v.co += d   
         else:
             verts_seq.ensure_lookup_table()
             for i in verts:
                 verts_seq[i].co += d
+            
+        
+        
 
         

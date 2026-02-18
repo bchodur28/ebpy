@@ -1,8 +1,7 @@
-# ebpy/select.py
 from __future__ import annotations
 import bpy
 
-from ._context import ContextError, _require_view_layer  # internal dependency
+from ebpy._context import ContextError, _require_view_layer  # internal dependency
 
 # region Public API region 
 
