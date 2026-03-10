@@ -100,7 +100,7 @@ def set_active(obj: bpy.types.Object, *, select: bool = True) -> Iterator[None]:
         yield
 
 @contextmanager
-def mode(obj: bpy.types.Objects, target_mode: str) -> Iterator[None]:
+def mode(obj: bpy.types.Object, target_mode: str) -> Iterator[None]:
     """
     Ensure Blender is in target_mode for obj, 
     then restore previous mode + selection. target_mode: "OBJECT" or "EDIT
@@ -127,9 +127,9 @@ def mode(obj: bpy.types.Objects, target_mode: str) -> Iterator[None]:
                 if prev_mode == "OBJECT":
                     if not _is_object_mode():
                         bpy.ops.object.mode_set(mode="OBJECT")
-                    elif prev_mode.startswith("EDIT"):
-                        if not _is_edit_mode():
-                            bpy.ops.object.mode_set(mode="EDIT")
+                elif prev_mode.startswith("EDIT"):
+                    if not _is_edit_mode():
+                        bpy.ops.object.mode_set(mode="EDIT")
             except Exception:
                 pass
 

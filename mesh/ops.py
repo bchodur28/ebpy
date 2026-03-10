@@ -31,5 +31,12 @@ def move_mesh(obj: bpy.types.Object, direction: VecLike, distance: float = 1.0, 
         sess.move_vertices(direction=direction, distance=distance, verts=verts, space=space)
 
 
+def snap_active_mesh_to_grid_units(selected_only=True):
+    obj = bpy.context.active_object
+    if obj is None:
+        raise ContextError(f"No active object selected.")
+    
+    with BMeshSession(obj, switch_to_edit=True) as sess:
+        sess.snap_vertices_to_grid_units(selected_only=selected_only)
 # endregion
 

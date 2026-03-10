@@ -5,8 +5,6 @@ from mathutils import Vector
 import bpy
 import bmesh
 
-from ebpy.dev.stopwatch import timer_dec
-
 from ebpy._context import ContextError, edit_mode
 
 VecLike = Iterable[float]
@@ -47,8 +45,6 @@ class BMeshSession:
             self._is_temp_bm = True
 
         # Helpful to ensure lookups and normals are up-to-date
-        self._bm.verts.ensure_lookup_table()
-        self._bm.faces.ensure_lookup_table()
         self._bm.normal_update()
         return self
     
@@ -78,7 +74,7 @@ class BMeshSession:
         """Return list of vertex indices (ints) in this mesh (in current BM)"""
         if self._bm is None:
             raise ContextError("Mesh is not entered")
-        self._bm.verts.ensure_lookup_table()
+        
         if selected_only:
             return [v.index for v in self._bm.verts if v.select]
         else:
@@ -95,15 +91,11 @@ class BMeshSession:
         if delta.length == 0:
             return
         
-        delta = delta.normalized() * distance
-
-        sp = space.upper()
-        if sp == "WORLD":
-            delta = self.obj.matrix_world.inverted_safe().to_3x3() @ delta
-        elif sp != "LOCAL":
-            raise ContextError("Space must be 'LOCAL' or 'WORLD'.")
+        delta = delta.normalized() * dist
+        delta = self.convert_vector_given_space(space, delta)
         
-        bm = self._bm
+        bm = self.get_bm()
+        
         verts_seq = bm.verts
         d = delta
 
@@ -114,6 +106,58 @@ class BMeshSession:
             verts_seq.ensure_lookup_table()
             for i in verts:
                 verts_seq[i].co += d
+    
+    def snap_vertices_to_grid_units(self, *, selected_only: bool = True):
+        unit = bpy.context.scene.unit_settings.length_unit
+        bm = self.get_bm()
+
+        if selected_only:
+            verts_seq = [v for v in bm.verts if v.select]
+        else:
+            verts_seq = bm.verts
+
+        for v in verts_seq:
+            v.co = self.get_rounded_position(v.co, unit)
+            
+
+    def get_rounded_position(self, current_position: Vector, unit: str):
+        step = BMeshSession.get_unit_step(unit)
+        return Vector((
+            round(current_position.x / step) * step,
+            round(current_position.y / step) * step,
+            round(current_position.z / step) * step,
+        ))
+
+    @staticmethod
+    def get_unit_step(unit: str) -> float:
+        match unit:
+            case 'MILLIMETERS':
+                return 0.001
+            case 'CENTIMETERS':
+                return 0.01
+            case 'METERS':
+                return 1.0
+            case 'KILOMETERS':
+                return 1000.0
+            case 'INCHES':
+                return 0.0254
+            case 'FEET':
+                return 0.3048
+            case _:
+                return 1.0
+
+    def get_bm(self) -> bmesh.types.BMesh:
+        if self._bm is None:
+            raise ContextError("Mesh is not entered.")
+        return self._bm
+
+    def convert_vector_given_space(self, space, delta) -> Vector:
+        sp = space.upper()
+        if sp == "WORLD":
+            delta = self.obj.matrix_world.inverted_safe().to_3x3() @ delta
+        elif sp != "LOCAL":
+            raise ContextError("Space must be 'LOCAL' or 'WORLD'.")
+        return delta
             
         
         
